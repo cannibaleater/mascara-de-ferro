@@ -101,3 +101,5 @@ async def vf(ctx, id_canal_embed: int, id_cargo: int, id_canal_formulario: int):
     view = OpenFormView(ctx.author, id_canal_formulario, id_cargo)
     await canal.send(embed=embed, view=view)
     await ctx.send("Painel enviado com sucesso!", delete_after=5)
+
+bot.run("MTM5MDA2NDExNDg3MjYxNTAwMg.GpuevA.tt_cwaTf6qF1VI8qep0rXlJP-UIQntJV50H-B")
