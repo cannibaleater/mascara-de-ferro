@@ -5,9 +5,13 @@ from discord import ButtonStyle, TextStyle, Interaction
 intents = discord.Intents.default()
 intents.message_content = True
 intents.guilds = True
-intents.members = True  # Necessário para gerenciar membros
+intents.members = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
+
+# Armazena canal e cargo padrão para persistência
+CANAL_FORMULARIO_ID = 0  # Substitua com ID real se quiser registrar manualmente
+CARGO_ID = 0              # Substitua com ID real se quiser registrar manualmente
 
 class FormModal(discord.ui.Modal, title="Formulário de Verificação"):
     nome = discord.ui.TextInput(label="Quem você conhece?", style=TextStyle.short)
@@ -73,18 +77,14 @@ class ActionView(discord.ui.View):
             await interaction.response.send_message("Usuário não encontrado no servidor.", ephemeral=True)
 
 class OpenFormView(discord.ui.View):
-    def __init__(self, user, canal_formulario_id, cargo_id):
+    def __init__(self, canal_formulario_id, cargo_id):
         super().__init__(timeout=None)
-        self.user = user
         self.canal_formulario_id = canal_formulario_id
         self.cargo_id = cargo_id
 
     @discord.ui.button(label="Abrir", style=discord.ButtonStyle.primary)
     async def open_button(self, interaction: Interaction, button: discord.ui.Button):
-        if interaction.user.id != self.user.id:
-            await interaction.response.send_message("Você não pode abrir o formulário de outra pessoa.", ephemeral=True)
-            return
-        await interaction.response.send_modal(FormModal(self.user, self.canal_formulario_id, self.cargo_id))
+        await interaction.response.send_modal(FormModal(interaction.user, self.canal_formulario_id, self.cargo_id))
 
 @bot.command(name="vf")
 async def vf(ctx, id_canal_embed: int, id_cargo: int, id_canal_formulario: int):
@@ -98,8 +98,16 @@ async def vf(ctx, id_canal_embed: int, id_cargo: int, id_canal_formulario: int):
         description="Clique no botão abaixo para abrir o formulário de verificação.",
         color=0x5865f2
     )
-    view = OpenFormView(ctx.author, id_canal_formulario, id_cargo)
+    view = OpenFormView(id_canal_formulario, id_cargo)
     await canal.send(embed=embed, view=view)
     await ctx.send("Painel enviado com sucesso!", delete_after=5)
+
+@bot.event
+async def on_ready():
+    print(f"Bot conectado como {bot.user}")
+    
+    # Se você quiser registrar a view após restart, defina os IDs fixos no topo
+    if CANAL_FORMULARIO_ID != 0 and CARGO_ID != 0:
+        bot.add_view(OpenFormView(CANAL_FORMULARIO_ID, CARGO_ID))  # Mantém botão ativo após reboot
 
 bot.run("MTM5MDA2NDExNDg3MjYxNTAwMg.GpuevA.tt_cwaTf6qF1VI8qep0rXlJP-UIQntJV50H-B")
